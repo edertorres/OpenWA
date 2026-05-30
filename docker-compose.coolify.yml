@@ -1,0 +1,48 @@
+services:
+  openwa:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 2785
+
+      DATABASE_TYPE: sqlite
+      DATABASE_NAME: /app/data/openwa.sqlite
+      DATABASE_SYNCHRONIZE: "false"
+
+      ENGINE_TYPE: whatsapp-web.js
+      SESSION_DATA_PATH: /app/data/sessions
+      PUPPETEER_HEADLESS: "true"
+      PUPPETEER_ARGS: --no-sandbox,--disable-setuid-sandbox,--disable-dev-shm-usage,--disable-gpu
+
+      STORAGE_TYPE: local
+      STORAGE_LOCAL_PATH: /app/data/media
+
+      REDIS_ENABLED: "false"
+      QUEUE_ENABLED: "false"
+
+      ENABLE_SWAGGER: "true"
+      API_MASTER_KEY: ${SERVICE_PASSWORD_OPENWA}
+      CORS_ORIGINS: "*"
+    volumes:
+      - openwa-data:/app/data
+    expose:
+      - "2785"
+
+  dashboard:
+    build:
+      context: ./dashboard
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - openwa
+    expose:
+      - "80"
+    labels:
+      - "coolify.managed=true"
+      - "coolify.applicationId=${COOLIFY_APPLICATION_UUID}"
+
+volumes:
+  openwa-data:
